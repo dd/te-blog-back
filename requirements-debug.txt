@@ -1,0 +1,2 @@
+django_silk==5.2.0
+django_debug_toolbar==4.4.6

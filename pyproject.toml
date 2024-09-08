@@ -1,0 +1,173 @@
+[build-system]
+requires = ["hatchling==1.25.0", "hatch-requirements-txt==0.4.1"]
+build-backend = "hatchling.build"
+
+[project]
+name = "2024-tovarisch-engineer-blog-backend"
+authors = [
+	{ name = "Dmitry Dobrynin", email = "dd@tovarisch.engineer" },
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["version", "dependencies", "optional-dependencies"]
+
+[project.urls]
+"Homepage" = "https://admin.tovarisch.engineer/"
+"Repository" = "https://github.com/dd/te-blog-back"
+"Bug Tracker" = "https://github.com/dd/te-blog-back/issues"
+
+[tool.hatch.version]
+path = "te_blog_backend/__init__.py"
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+[tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
+docs = ["requirements-docs.txt"]
+debug = ["requirements-debug.txt"]
+
+[tool.hatch.envs.dev]
+description = "Dev environment"
+python = "3.12"
+dependencies = [
+	"pre-commit==3.8.0",
+	"ipython==8.27.0",
+	"colorlog==6.8.2",
+]
+features = ["docs", "debug"]
+[tool.hatch.envs.dev.env-vars]
+PYTHONPATH = "."
+DJANGO_SETTINGS_MODULE = "te_blog_backend.settings"
+TE_ENV_PATH = ".env"
+TE_DEBUG_TOOLBAR_ENABLED = "true"
+TE_SILK_ENABLED = "true"
+[tool.hatch.envs.dev.scripts]
+precommit_install = "pre-commit install {args}"
+precommit_uninstall = "pre-commit uninstall {args}"
+init = [
+	"git config --local gitflow.branch.master \"master\"",
+	"git config --local gitflow.branch.develop \"dev\"",
+	"git config --local gitflow.prefix.feature \"feature/\"",
+	"git config --local gitflow.prefix.bugfix \"bugfix/\"",
+	"git config --local gitflow.prefix.release \"release/\"",
+	"git config --local gitflow.prefix.hotfix \"hotfix/\"",
+	"git config --local gitflow.prefix.support \"support/\"",
+	"git config --local gitflow.prefix.versiontag \"v\"",
+	"git config --local gitflow.path.hooks $(pwd)\"/.git/hooks\"",
+	"precommit_install",
+]
+remove = [
+	"git config --local --remove-section gitflow.branch",
+	"git config --local --remove-section gitflow.prefix",
+	"git config --local --remove-section gitflow.path",
+	"precommit_uninstall",
+]
+makemigrations = "django-admin makemigrations {args}"
+migrate = "django-admin migrate {args}"
+collectstatic = "django-admin collectstatic {args}"
+shell = "django-admin shell"
+changelog-update = [
+	"git fetch origin --tags",
+	"gitmoji-changelog update \"$(hatch version)\" --preset generic --group-similar-commits",
+]
+runserver = "django-admin runserver {args:0.0.0.0:42000}"
+
+[tool.hatch.envs.lint]
+description = "Lint environment"
+detached = true
+python = "3.12"
+dependencies = [
+	"ruff==0.6.4",
+	"black==24.8.0",
+]
+[tool.hatch.envs.lint.scripts]
+check = [
+	"ruff check {args:.}",
+	"black --check --diff --exclude=\".*(migrations\\/.*|te_blog_backend\\/settings\\/__init__\\.py)$\" {args:.}",
+]
+format = [
+	"ruff format {args:.}",
+	"black --exclude=\".*(migrations\\/.*|te_blog_backend\\/settings\\/__init__\\.py)$\" {args:.}",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+show-fixes = true
+# update-check = true
+[tool.ruff.lint]
+select = [
+	"A",
+	"B",
+	"C",
+	"DTZ",
+	"E",
+	"EM",
+	"F",
+	"I",
+	"ICN",
+	"ISC",
+	"N",
+	"PLC",
+	"PLE",
+	"PLR",
+	"PLW",
+	"Q",
+	"RUF",
+	"S",
+	"SIM",
+	"T",
+	"TID",
+	"UP",
+	"W",
+	"YTT",
+]
+ignore = [
+	"RUF001",  # Allow similar characters like latin `c` and cyrillic `с`
+	"RUF002",  # Allow russian at docstrings
+	"RUF003",  # Allow russian at comment
+	"PLR0913",  # Allow any number of function arguments
+	"RUF012",  # disabled the requirement to use ClassVar (requires metaclasses to use =\)
+	"E741",  # Allow variables of like "l", "O",  "i"
+	"UP015",  # Allows to specify the file opening method "r"
+	# # Allow non-abstract empty methods in abstract base classes
+	# "B027",
+	# # Ignore checks for possible passwords
+	# "S105", "S106", "S107",
+	# # Ignore complexity
+	# "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
+	# "PLC1901", # empty string comparisons
+	# "PLW2901", # `for` loop variable overwritten
+	# "SIM114", # Combine `if` branches using logical `or` operator
+]
+[tool.ruff.lint.extend-per-file-ignores]
+"te_blog_backend/settings/__init__.py" = ["E402"]
+"__init__.py" = ["F401", "F403"]
+"test_*.py" = ["S101", "PLR2004", "DTZ001"]
+"*/migrations/*" = ["I", "E", "Q", "RUF"]
+# [tool.ruff.flake8-import-conventions]
+[tool.ruff.lint.flake8-import-conventions.extend-aliases]
+"datetime" = "dt"
+# [tool.ruff.flake8-quotes]
+# inline-quotes = "single"
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+[tool.ruff.lint.isort]
+force-single-line = true
+known-first-party = ["te_blog_backend"]
+lines-after-imports = 2
+no-lines-before = ["local-folder"]
+section-order = ["future", "standard-library", "django", "third-party", "first-party", "local-folder"]
+[tool.ruff.lint.isort.sections]
+django = ["django"]
+
+[tool.isort]
+known_first_party = ["te_blog_backend"]
+lines_after_imports = 2
+no_lines_before = ["LOCALFOLDER"]
+known_django = "django"
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+force_single_line  = true
